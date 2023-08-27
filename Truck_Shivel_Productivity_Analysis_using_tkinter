@@ -1,0 +1,158 @@
+import math
+import tkinter as tk
+from tkinter import ttk
+
+# Define the calculation function based on the provided parameters
+def calculate(truck_capacity, shovel_bucket_capacity, shovel_bucket_cycle_time, haul_distance, return_distance,
+              hauling_speed_with_load, empty_speed, average_dumping_time, shovel_cost, truck_cost):
+    
+    # Calculate hauling and returning time
+    hauling_time = haul_distance / hauling_speed_with_load * 60
+    returning_time = return_distance / empty_speed * 60
+
+    # Calculate optimal number of bucket loads based on truck cycle time
+    balanced_number_of_buckets = math.floor(truck_capacity / shovel_bucket_capacity)
+    balanced_number_of_buckets_ceil = math.ceil(truck_capacity / shovel_bucket_capacity)
+    # Calculate truck loading time 
+    truck_loading_time = balanced_number_of_buckets * shovel_bucket_cycle_time / 60 #lower integer bucket
+    truck_loading_time_ceil = balanced_number_of_buckets_ceil * shovel_bucket_cycle_time / 60  #higher integer bucket
+    x = truck_loading_time_ceil - truck_loading_time # difference between lower intger and higher integer used to change the cycle time ahead
+
+    # Calculate truck cycle time
+    truck_cycle_time = hauling_time + returning_time + truck_loading_time + average_dumping_time
+
+    # Calculate balanced number of trucks
+    balanced_number_of_trucks = math.floor(truck_cycle_time / truck_loading_time)
+    balanced_number_of_trucks_ceil = math.ceil(truck_cycle_time / truck_loading_time_ceil)
+
+    # Initialize a list to store results for different cases
+    results = []
+
+    # Calculate calculations for each bucket option
+    for i in range(4):
+        # Case 1
+        if i == 0:
+            # Calculate productivity and number of buckets/trucks lower integer bucket and lower integer truck
+            productivity_case = (balanced_number_of_trucks * shovel_bucket_capacity * balanced_number_of_buckets * 60) * 0.85 / truck_cycle_time
+            num_buckets = balanced_number_of_buckets
+            num_trucks = balanced_number_of_trucks_ceil
+
+        # Case 2
+        elif i == 1:
+             # Calculate productivity and number of buckets/trucks lower integer bucket and higher integer truck
+            productivity_case = (shovel_bucket_capacity * balanced_number_of_buckets * 60) * 0.85 / truck_loading_time
+            num_buckets = balanced_number_of_buckets
+            num_trucks = balanced_number_of_trucks
+
+        # Case 3
+        elif i == 2:
+            # Calculate productivity and number of buckets/trucks higher integer bucket and lower integer truck
+            # truck_capacity is used as shove_bucket_capacity*no of buckets is higher than truck capacity
+            productivity_case = (truck_capacity * balanced_number_of_trucks * 60) * 0.85 / (truck_cycle_time + x)
+            num_buckets = balanced_number_of_buckets_ceil
+            num_trucks = balanced_number_of_trucks_ceil
+
+        # Case 4
+        elif i == 3:
+            # Calculate productivity and number of buckets/trucks Higher integer bucket and Higher integer truck
+            productivity_case = (truck_capacity * 60) * 0.85 / (truck_loading_time + x)
+            num_buckets = balanced_number_of_buckets_ceil
+            num_trucks = balanced_number_of_trucks
+        # Add results to the list
+        results.append((num_buckets, num_trucks, productivity_case))
+
+    
+    return results
+
+# Define the function to display calculation results on the GUI
+def display_results(truck_capacity_var, shovel_bucket_capacity_var, shovel_bucket_cycle_time_var,
+                    haul_distance_var, return_distance_var, hauling_speed_with_load_var,
+                    empty_speed_var, average_dumping_time_var, shovel_cost_var, truck_cost_var):
+    
+    # Retrieve input values from GUI input fields
+    truck_capacity = float(truck_capacity_var.get())
+    shovel_bucket_capacity = float(shovel_bucket_capacity_var.get())
+    shovel_bucket_cycle_time = float(shovel_bucket_cycle_time_var.get())
+    haul_distance = float(haul_distance_var.get())
+    return_distance = float(return_distance_var.get())
+    hauling_speed_with_load = float(hauling_speed_with_load_var.get())
+    empty_speed = float(empty_speed_var.get())
+    average_dumping_time = float(average_dumping_time_var.get())
+    shovel_cost = float(shovel_cost_var.get())
+    truck_cost = float(truck_cost_var.get())
+   
+    # Call the calculate function to get results
+    results = calculate(truck_capacity, shovel_bucket_capacity, shovel_bucket_cycle_time, haul_distance, return_distance,
+                        hauling_speed_with_load, empty_speed, average_dumping_time, shovel_cost, truck_cost)
+   
+    # Clear the previous results
+    for widget in results_frame.winfo_children():
+        widget.destroy()
+
+    # Display results in the results frame
+    for idx, (num_buckets, num_trucks, productivity_case) in enumerate(results):
+        cost = (shovel_cost + num_trucks * truck_cost) / productivity_case
+
+        result_label = tk.Label(results_frame, text=f"Results for Case {idx + 1}")
+        result_label.pack()
+
+        tk.Label(results_frame, text=f"Number of Buckets: {num_buckets}").pack()
+        tk.Label(results_frame, text=f"Number of Trucks: {num_trucks}").pack()
+        tk.Label(results_frame, text=f"Productivity: {productivity_case:.2f} lcy/hr").pack()
+        tk.Label(results_frame, text=f"Cost: {cost:.2f} $/lcy").pack()
+
+# Create the main application window
+root = tk.Tk()
+root.title("Productivity Calculator")
+
+# Create input fields for user input
+truck_capacity_var = tk.StringVar()
+shovel_bucket_capacity_var = tk.StringVar()
+shovel_bucket_cycle_time_var = tk.StringVar()
+haul_distance_var = tk.StringVar()
+return_distance_var = tk.StringVar()
+hauling_speed_with_load_var = tk.StringVar()
+empty_speed_var = tk.StringVar()
+average_dumping_time_var = tk.StringVar()
+shovel_cost_var = tk.StringVar()
+truck_cost_var = tk.StringVar()
+
+tk.Label(root, text="Truck Capacity (lcy):").pack()
+tk.Entry(root, textvariable=truck_capacity_var).pack()
+tk.Label(root, text="Shovel capacity(lcy) :").pack()
+tk.Entry(root, textvariable=shovel_bucket_capacity_var).pack()
+tk.Label(root, text="Shovel cycle time (sec):").pack()
+tk.Entry(root, textvariable=shovel_bucket_cycle_time_var).pack()
+tk.Label(root, text="Hauling Distance (miles)").pack()
+tk.Entry(root, textvariable= haul_distance_var).pack()
+
+tk.Label(root, text="Returing Distance (miles)").pack()
+tk.Entry(root, textvariable= return_distance_var).pack()
+tk.Label(root, text="Hauling Speed (mph)").pack()
+tk.Entry(root, textvariable= hauling_speed_with_load_var).pack()
+tk.Label(root, text="Returning Speed (mph) ").pack()
+tk.Entry(root, textvariable= empty_speed_var).pack()
+tk.Label(root, text="Dumping Time (minutes)").pack()
+tk.Entry(root, textvariable= average_dumping_time_var).pack()
+tk.Label(root, text="Shovel Cost ( $/hr )").pack()
+tk.Entry(root, textvariable= shovel_cost_var).pack()
+tk.Label(root, text="truck Cost ($/hr)").pack()
+tk.Entry(root, textvariable= truck_cost_var).pack()
+
+
+# Create a CALCULATE button to perform calculations and display calculations
+calculate_button = tk.Button(root, text="Calculate", command=lambda: display_results(
+    truck_capacity_var, shovel_bucket_capacity_var, shovel_bucket_cycle_time_var,
+    haul_distance_var, return_distance_var, hauling_speed_with_load_var,
+    empty_speed_var, average_dumping_time_var, shovel_cost_var, truck_cost_var
+))
+calculate_button.pack()
+
+# Create a new frame for displaying calculation results
+results_frame = tk.Frame(root)
+results_frame.pack()
+
+
+# Start the main event loop
+root.mainloop()
+

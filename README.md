@@ -17,6 +17,8 @@ The program performs the following steps to analyze the productivity:
   Case 1: Balanced Number of Bucket Loads
   When the number of bucket loads is rounded down to an integer lower than the balanced number of loads:
     •	Truck Load = Number of bucket loads × Bucket volume
+
+   
   Case 2: Imbalanced Number of Bucket Loads
   When the number of bucket loads is rounded up to an integer higher than the balanced number of loads:
     •	Truck Load = Truck capacity
@@ -25,6 +27,9 @@ The program performs the following steps to analyze the productivity:
   Returning Time
     •	Calculate returning time = Return distance / Return travel speed
   Number of Trucks Required
+
+
+  
 2.Calculate the number of trucks required based on truck cycle time and loading time:
   Balanced Number of Trucks = Truck cycle time / Truck loading time (rounded down)
 
